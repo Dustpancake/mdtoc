@@ -15,8 +15,20 @@ echo "export PATH=$(pwd):$PATH" >> ~/.profile
 ### Usage
 In a terminal
 ```
-mdtoc {file|dir} [{file|dir}, ...]
+mdtoc {file|dir} [{file|dir}, ...] [-d/--header N]
 ```
+The `-d` option sets the count of # for the top level header. For example, if you formatted a document with
+```
+# Title
+
+### Some preliminary information
+Lorem Ipsum dolor sit amet.
+
+## First heading
+...
+```
+You can omit headings prior to the `## First Heading` by setting the header flag `-d 2` (which is also the default value).
+
 The program will crawl directories for `.md` files and generate a table of contents in the format
 
 1. [Heading]()

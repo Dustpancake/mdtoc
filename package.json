@@ -1,6 +1,6 @@
 {
   "name": "mdtoc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Table of Contents generator for Markdown.",
   "main": "mdtoc",
   "dependencies": {

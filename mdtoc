@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 var argv = require('yargs')
 	.usage('Usage: $0 file/dir')
+	.example('$0 README.md -d 3', 'Create a ToC for \'README.md\' using ### as the top level header.')
 	.demandCommand(1)
+	.alias('d', 'header')
+	.nargs('d', 1)
+	.default({'d':2})
 	.argv;
 
 const fs = require('fs');
 var path = require('path');
 
 // MAX # COUNT
-let H_DEPTH = 2;
+let H_DEPTH = argv.header;
 
 function expandIfDir(fpath) {
 	if (fs.existsSync(fpath) && fs.lstatSync(fpath).isDirectory()) {
