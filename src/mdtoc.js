@@ -2,15 +2,21 @@ var path = require('path');
 var fs = require('fs');
 
 const filesys = require("./filesystem.js");
-const tocgen = require("./tocgen.js");
+
+// File type handling
+
+const ipynb = require("./filetypes/ipynb.js");
+const md = require("./filetypes/markdown.js");
 
 function markdown(file, depth) {
-    tocgen.tocfile(file, depth);
+    md.mktoc(file, depth);
 }
 
 function ipythonb(file, depth) {
-    console.log("ipynb is todo")
+    ipynb.mktoc(file, depth);
 }
+
+// Methods
 
 function generate(file, depth) {
     let ext = path.extname(file);
