@@ -1,3 +1,5 @@
+const config = require("./config.js")
+
 function parseheading(line) {
     /* return count of # at start of line*/
     return line.split(' ')[0].match(/#/g || []).length
@@ -44,11 +46,15 @@ function escapes(state, line) {
         if (state == "codeblock") {
             state = ""
         } else state = "codeblock";
+    } else if (line.match(config.RE_TOCSTART)) {
+        state = "toc"
+    } else if (line.match(config.RE_TOCEND)) {
+        state = "";
     }
     return state;
 }
 
-function getheadings(content, hashdepth=2) {
+function getheadings(content, hashdepth=2, currentroot=null) {
     /* returns promise which resolves to object
         {
             headings: Heading[] 
@@ -60,7 +66,6 @@ function getheadings(content, hashdepth=2) {
 
         var state = ""; // keep track of escape sequences; atm only ``` and $$
         let rootheadings = []
-        let currentroot = null // current Heading to include subheadings under
         let counter = 0
 
         content.split("\n").forEach(rawline => {
@@ -86,8 +91,8 @@ function getheadings(content, hashdepth=2) {
                         rawline,
                         heading.tagged()
                     )
-
-                    if (currentroot !== null && currentroot.count < hashcount) {
+                    
+                    if (currentroot !== null && currentroot.count != hashcount) {
                         // add as a subheading
                         currentroot.addsubheading(heading);
 

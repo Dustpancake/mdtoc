@@ -3,11 +3,7 @@ const fs = require('fs');
 const {getheadings} = require('./headings.js');
 
 // CONSTANTS
-
-const TOCSTART = "<!--BEGIN TOC-->";
-const TOCEND = "<!--END TOC-->";
-const TOCREGEX = new RegExp(`${TOCSTART}[\\s\\S^<]*${TOCEND}`);
-
+const {TOCSTART, TOCEND, TOCREGEX} = require("./config.js")
 
 function fmttoc(toc) {
     // formats TOC string
@@ -15,7 +11,7 @@ function fmttoc(toc) {
 }
 
 function inserttoc(content, toc) {
-    if (content.includes(TOCSTART) && content.includes('<!--END TOC-->')) {
+    if (content.includes(TOCSTART) && content.includes(TOCEND)) {
         return content.replace(TOCREGEX, toc.slice(0, -1))
     } else {
         return toc + content;
@@ -47,25 +43,29 @@ function buildtoc(headings) {
     return toc;
 }
 
+function finalizetoc(headings, content) {
+    toc = buildtoc(headings)
+    console.log(toc);
+    // format
+    toc = fmttoc(toc); 
+    // insert
+    content = inserttoc(content, toc);
+    return content;
+}
+
 function maketoc(content, depth) {
     // returns content with TOC inserted
 
     return new Promise((resolve, reject) => {
         getheadings(content, depth).then(ret => {
-            // assemble TOC
-            toc = buildtoc(ret.headings)
-            console.log(toc);
-            // format
-            toc = fmttoc(toc); 
-            // insert
-            content = inserttoc(ret.content, toc);
-            
-            resolve(content);
+            resolve(
+                finalizetoc(ret.headings, ret.content)
+            );
         });
     });
 }
 
-function tocfile(filepath, depth) {
+function tocfile(filepath, handler) {
     let logstring = `Generating TOC for "${filepath}":`;
     console.log(logstring);
     console.log("-".repeat(logstring.length));
@@ -77,17 +77,8 @@ function tocfile(filepath, depth) {
         (err, data) => {
 
         if (!err) {
-
-            maketoc(data, depth).then(newdata => {
-                fs.writeFile(filepath, newdata, err => {
-                    if (!err) {
-                        console.log(newdata)
-                        console.log("Changes written to file.")
-                    } else console.log(err);
-                });
-
-            });
-
+            // call handler on data
+            handler(data);
         } else {
             console.log(`** Skipping: Error opening file\n${err}\n`);
         }
@@ -96,4 +87,4 @@ function tocfile(filepath, depth) {
 
 }
 
-module.exports = {tocfile, maketoc}
+module.exports = {tocfile, maketoc, finalizetoc}
