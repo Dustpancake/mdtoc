@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+
+const mdtoc = require("./src/mdtoc.js");
+
 var argv = require('yargs')
 	.usage('Usage: $0 file/dir')
 	.example('$0 README.md -d 3', 'Create a ToC for \'README.md\' using ### as the top level header.')
@@ -8,153 +11,9 @@ var argv = require('yargs')
 	.default({'d':2})
 	.argv;
 
-const fs = require('fs');
-var path = require('path');
-
-// MAX # COUNT
-let H_DEPTH = argv.header;
-
-function expandIfDir(fpath) {
-	if (fs.existsSync(fpath) && fs.lstatSync(fpath).isDirectory()) {
-		let allFiles = [];
-		var files = fs.readdirSync(fpath);
-		files.forEach(file => {
-			file = path.join(fpath, file);
-			if (path.extname(file) == '.md') 
-				allFiles.push(file); 
-			else if (fs.lstatSync(file).isDirectory()) 
-				allFiles = allFiles.concat(expandIfDir(file));
-		});
-		return allFiles;
-	} else {
-		if (path.extname(fpath) == '.md') return [fpath];
-		else {
-			console.log(`Could not find file/dir '${fpath}'.`);
-			process.exit(1);
-		}
-	}
-}
-
-function buildTocString(content, headings) {
-	let tocString = "";
-	let indexes = {'0':0};
-
-	let makeEntry = (descriptor, depth) => {
-		depth = depth.toString();
-		var i = 1;
-		if (depth in indexes) {
-			i = ++indexes[depth];
-		} else {
-			indexes[depth] = i;
-		}
-		return `${i}. [${descriptor.title}](#${descriptor.tag})`
-	};
-
-	let cascade = (item, depth) => {
-		if (item.subHead.length == 0) return makeEntry(item, depth);
-		var subTOC = makeEntry(item, depth) + '\n';
-		item.subHead.forEach((subItem) => {
-			subTOC += '\t'.repeat(depth+1) + cascade(subItem, depth+1) + "\n";
-		});
-		return subTOC;
-	};
-	var tocPromise = new Promise((resolve, reject) => {
-			headings.forEach((heading) => {
-				indexes = {'0':indexes['0']};
-				if (heading === null) return; 
-				tocString += cascade(heading, 0) + "\n";
-			});
-		tocString = tocString.replace(/(\n)+/g, '\n');
-		resolve();
-	});
-	return tocPromise.then(() => {
-		tocString = "<!--BEGIN TOC-->\n## Table of Contents\n" + tocString + "<!--END TOC-->\n";
-		if (content.includes('<!--BEGIN TOC-->') && content.includes('<!--END TOC-->')) {
-			return content.replace(/<!--BEGIN TOC-->[\s\S^<]*<!--END TOC-->/, tocString.slice(0, -1))
-		} else {
-			return tocString + content;
-		}
-	});
-}
-
-function adjustHeadings(file) {
-	let content = "";
-	console.log(`Generating TOC for ${file}:`);
-	try { 
-		content = fs.readFileSync(file, {encoding: 'utf-8'});
-	} catch(err) {
-		console.log(` ** Skipping: Error opening file\n${err}\n`)
-		return null;
-	}
-	let headings = [];
-	let count = 0;			// set to maximum + 1
-	var currentFold = null;
-	var desc = null;
-	let skipping = false;
-	let parseHeading = (string) => string.split(' ')[0].match(/#/g || []).length
-	var hcontent = new Promise((resolve, reject) => {
-			content.split('\n').forEach(i => {
-			if (i.includes('<!--BEGIN TOC-->') || skipping) {
-				skipping = true;
-				if (i.includes('<!--END TOC-->')) {
-					skipping = false;
-				}
-				return;
-			}
-			if (i.startsWith('#')) {
-				j = i;
-				i = i.split("<a name")[0].trim();
-				var h_count = parseHeading(i);
-				if (h_count < H_DEPTH) return;
-				console.log(`\t+ '${i}'`);
-
-				desc = {
-					'title' 	: i.substring(h_count).trim(), 
-					'count' 	: h_count, 
-					'tag'		: `toc-sub-tag-${count++}`,
-					'subHead'	: []
-				};
-				content = content.replace(j, i + ` <a name="${desc.tag}"></a>`);
-
-				if (h_count > H_DEPTH && currentFold !== null && currentFold.count < h_count) {
-
-					var getLeaf = (nItem) => {
-						if (nItem.subHead.length != 0) {
-							var end = nItem.subHead.slice(-1)[0];
-							if (end.count < h_count) {
-								return getLeaf(end);
-							}
-						}
-						return nItem;
-					};
-
-					var nItem = getLeaf(currentFold);
-					nItem.subHead.push(desc);
-
-				} else if (h_count == H_DEPTH) {
-					if (currentFold !== null) {
-						headings.push(currentFold);
-					}
-					currentFold = desc;
-				}
-			}
-		});
-		resolve();
-	});
-	headings.push(currentFold);
-	hcontent.then(() => buildTocString(content, headings))
-			.then((content) => {
-		// console.log(content)
-		fs.writeFileSync(file, content);
-	});
-}
-
-var mdFiles = [];
 argv._.forEach(item => {
-	mdFiles = mdFiles.concat(expandIfDir(item));
+	mdtoc.run(item, argv.header)
 });
-
-mdFiles.forEach(item => adjustHeadings(item));
 
 
 
