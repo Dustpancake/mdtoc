@@ -8,11 +8,12 @@ var argv = require('yargs')
 	.demandCommand(1)
 	.alias('d', 'header')
 	.nargs('d', 1)
-	.default({'d':2})
+	.boolean('tags')
+	.default({'d':2, 'tags': true})
 	.argv;
 
 argv._.forEach(item => {
-	mdtoc.run(item, argv.header)
+	mdtoc.run(item, argv.header, argv.tags)
 });
 
 

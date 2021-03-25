@@ -15,14 +15,14 @@ function expand(content) {
     return content;
 }
 
-function recurse(cells, counter, headings, depth, root=null) {
+function recurse(cells, counter, headings, depth, do_tags, root=null) {
 
     return new Promise((resolve, reject) => {
 
         let advance = () => {
             // advance recursion step
             if (counter < cells.length - 1) {
-                recurse(cells, counter + 1, headings, depth, root).then(i => resolve(i));
+                recurse(cells, counter + 1, headings, depth, do_tags, root).then(i => resolve(i));
             } else {
                 resolve(cells);
             }
@@ -32,7 +32,7 @@ function recurse(cells, counter, headings, depth, root=null) {
             // read celldata
             let celldata = cells[counter].source.join("");
             
-            getheadings(celldata, depth, root).then(res => {
+            getheadings(celldata, depth, do_tags, root).then(res => {
 
                 // update cell content
                 cells[counter].source = expand(res.content)
@@ -94,14 +94,14 @@ function tocnb(nb, toc) {
     return nb;
 }
 
-function parsenb(content, depth) {
+function parsenb(content, depth, do_tags) {
     let nb = JSON.parse(content);
     let headings = []
 
     let counter = 0;
 
     return new Promise((resolve, reject) => {
-        recurse(nb.cells, counter, headings, depth).then(new_cells => {
+        recurse(nb.cells, counter, headings, depth, do_tags).then(new_cells => {
 
             console.log(headings);
 
@@ -118,11 +118,11 @@ function parsenb(content, depth) {
     });
 }
 
-function mktoc(filepath, depth) {
+function mktoc(filepath, depth, do_tags) {
     // markdown file mktoc
 
     tocfile(filepath, (content) => {
-        parsenb(content, depth).then(newcontent => {
+        parsenb(content, depth, do_tags).then(newcontent => {
 
             // write changes to file 
             fs.writeFile(filepath, newcontent, err => {
