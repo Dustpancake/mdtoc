@@ -44,13 +44,19 @@ function buildtoc(headings) {
 }
 
 function finalizetoc(headings, content) {
-    toc = buildtoc(headings)
-    console.log(toc);
-    // format
-    toc = fmttoc(toc); 
-    // insert
-    content = inserttoc(content, toc);
-    return content;
+    if (headings.length > 0) { 
+        toc = buildtoc(headings)
+        console.log(toc);
+        // format
+        toc = fmttoc(toc); 
+        // insert
+        content = inserttoc(content, toc);
+        return content;
+    } else {
+        // don't insert empty tocs
+        // get rid of any old tocs
+        return content.replace(TOCREGEX, "\n");
+    }
 }
 
 function maketoc(content, depth, do_tags) {
