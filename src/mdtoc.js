@@ -8,36 +8,36 @@ const filesys = require("./filesystem.js");
 const ipynb = require("./filetypes/ipynb.js");
 const md = require("./filetypes/markdown.js");
 
-function markdown(file, depth) {
-    md.mktoc(file, depth);
+function markdown(file, depth, do_tags) {
+    md.mktoc(file, depth, do_tags);
 }
 
-function ipythonb(file, depth) {
-    ipynb.mktoc(file, depth);
+function ipythonb(file, depth, do_tags) {
+    ipynb.mktoc(file, depth, do_tags);
 }
 
 // Methods
 
-function generate(file, depth) {
+function generate(file, depth, do_tags) {
     let ext = path.extname(file);
 
     if (ext == ".md") {
         // markdown file
-        markdown(file, depth);
+        markdown(file, depth, do_tags);
     } else if (ext == ".ipynb") {
         // jupyter notebook
-        ipythonb(file, depth)
+        ipythonb(file, depth, do_tags)
     }
 }
 
-function run(root, depth) {
+function run(root, depth, do_tags) {
     if (!fs.lstatSync(root).isDirectory()) {
-        generate(root, depth);
+        generate(root, depth, do_tags);
     } else {
         
         /* entrypoint of crawler */
         filesys.crawldir(root, (file) => {
-            generate(file, depth);
+            generate(file, depth, do_tags);
         });
     }
 }

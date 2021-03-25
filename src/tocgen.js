@@ -44,20 +44,26 @@ function buildtoc(headings) {
 }
 
 function finalizetoc(headings, content) {
-    toc = buildtoc(headings)
-    console.log(toc);
-    // format
-    toc = fmttoc(toc); 
-    // insert
-    content = inserttoc(content, toc);
-    return content;
+    if (headings.length > 0) { 
+        toc = buildtoc(headings)
+        console.log(toc);
+        // format
+        toc = fmttoc(toc); 
+        // insert
+        content = inserttoc(content, toc);
+        return content;
+    } else {
+        // don't insert empty tocs
+        // get rid of any old tocs
+        return content.replace(TOCREGEX, "\n");
+    }
 }
 
-function maketoc(content, depth) {
+function maketoc(content, depth, do_tags) {
     // returns content with TOC inserted
 
     return new Promise((resolve, reject) => {
-        getheadings(content, depth).then(ret => {
+        getheadings(content, depth, do_tags).then(ret => {
             resolve(
                 finalizetoc(ret.headings, ret.content)
             );

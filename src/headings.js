@@ -13,13 +13,16 @@ class Heading {
         // computed
         this.title = heading.substring(hashcount).trim();
         this.count = hashcount;
-        this.tag = `${counter}-` + this.title.replace(/ /g, "-")
+        this.tag = this.title
+            .replace(/[\s\.]/g, "-")
+            .replace(/`/g, "")
+            .toLowerCase();
         // subheadings
         this.subheadings = []
     }
 
     tagged() {
-        return `${this.raw} <a name="${this.tag}"></a>`;
+        return `${this.raw} <a id="toc-tag-mdtoc" name="${this.tag}"></a>`;
     }
 
     addsubheading(subheading) {
@@ -54,7 +57,7 @@ function escapes(state, line) {
     return state;
 }
 
-function getheadings(content, hashdepth=2, currentroot=null) {
+function getheadings(content, hashdepth=2, do_tags=true, currentroot=null) {
     /* returns promise which resolves to object
         {
             headings: Heading[] 
@@ -74,7 +77,7 @@ function getheadings(content, hashdepth=2, currentroot=null) {
 
             if (state == "" && rawline.startsWith("#")) {
                 // remove tag if it exists
-                line = rawline.split("<a name")[0].trim();
+                line = rawline.split('<a id="toc-tag-mdtoc"')[0].trim();
 
                 // count number of #
                 let hashcount = parseheading(line);
@@ -86,11 +89,19 @@ function getheadings(content, hashdepth=2, currentroot=null) {
                     let heading = new Heading(line, hashcount, counter);
                     counter++;
 
-                    // replace line in content with tagged version
-                    content = content.replace(
-                        rawline,
-                        heading.tagged()
-                    )
+                    if (do_tags) {
+                        // replace line in content with tagged version
+                        content = content.replace(
+                            rawline,
+                            heading.tagged()
+                        )
+                    } else {
+                        // clear any tags
+                        content = content.replace(
+                            rawline,
+                            line
+                        )
+                    }
                     
                     if (currentroot !== null && currentroot.count != hashcount) {
                         // add as a subheading
