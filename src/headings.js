@@ -14,8 +14,8 @@ class Heading {
         this.title = heading.substring(hashcount).trim();
         this.count = hashcount;
         this.tag = this.title
-            .replace(/[\s\.]/g, "-")
-            .replace(/`/g, "")
+            .replace(config.TAG_REPLACE, "-")
+            .replace(config.TAG_EXCLUSIONS, "")
             .toLowerCase();
         // subheadings
         this.subheadings = []
